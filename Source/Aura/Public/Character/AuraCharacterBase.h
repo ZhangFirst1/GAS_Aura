@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "AuraCharacterBase.generated.h"
 
+// CharacterBase类不会创建实例，使用Abstract修饰
 UCLASS(Abstract)
 class AURA_API AAuraCharacterBase : public ACharacter
 {
@@ -16,4 +17,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	TObjectPtr<USkeletalMeshComponent> Weapon;
 };
