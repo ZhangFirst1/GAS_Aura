@@ -32,10 +32,22 @@ void AAuraEnemy::UnHighlightActor()
 	Weapon->SetRenderCustomDepth(false);
 }
 
+int32 AAuraEnemy::GetPlayLevel() const
+{
+	return Level;
+}
+
 void AAuraEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 
+	InitAbilityActorInfo();
+}
+
+void AAuraEnemy::InitAbilityActorInfo()
+{
 	// 初始化AbilitySystemComponent，指定Owner和Avatar
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	// 调用ASC的初始化设置
+	Cast<UAuraAbilitySystemComponent>(AbilitySystemComponent)->AbilityActorInfoSet();
 }

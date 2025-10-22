@@ -41,10 +41,13 @@ class AURA_API UAuraWidgetController : public UObject
 public:
 	UFUNCTION(BlueprintCallable)
 	void SetWidgetControllerParams(const FWidgetControllerParams& Params);
+	
+	UFUNCTION(BlueprintCallable)
 	virtual void BroadcastInitialValues();
+	
 	virtual void BindCallbacksToDependencies();
 protected:
-	// 有一组变量用来获取所有信息和数据
+	// 用一组变量用来获取所有信息和数据
 	UPROPERTY(BlueprintReadOnly, Category="WidgetController")
 	TObjectPtr<APlayerController> PlayerController;
 	

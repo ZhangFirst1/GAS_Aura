@@ -34,7 +34,73 @@ void AAuraEffectActor::ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGam
 
 	// GameplayEffectSpec是GE的实例包含了等级、上下文、Modifiers 等
 	// MakeOutgoingSpec用来创建一个实例，参数：GE类，等级，EffectContext
-	FGameplayEffectSpecHandle EffectSpecHandle = TargetASC->MakeOutgoingSpec(GameplayEffectClass, 1.f, EffectContextHandle);
+	const FGameplayEffectSpecHandle EffectSpecHandle = TargetASC->MakeOutgoingSpec(GameplayEffectClass, ActorLevel, EffectContextHandle);
 	// 把GE应用到TargetASC上，注意参数为const FGameplayEffectSpec&
-	TargetASC->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
+	const FActiveGameplayEffectHandle ActiveEffectHandle = TargetASC->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
+
+	// 判断是否为无限持续的效果
+	// .Data是一个TSharedPtr<FGameplayEffectSpec>  .Get()获得原始指针FGameplayEffectSpec*
+	// ->Def FGameplayEffectSpec内部有个 Def 成员，指向TWeakObjectPtr<const UGameplayEffect>
+	// .Get()获取WeakObjectPtr原始指针UGameplayEffect*
+	const bool bIsInfinite = EffectSpecHandle.Data.Get()->Def.Get()->DurationPolicy == EGameplayEffectDurationType::Infinite;
+	// 是无限持续的效果 且 需要移除  才需要保存句柄到ASC的映射
+	if (bIsInfinite && InfiniteEffectRemovalPolicy == EEffectRemovalPolicy::RemoveOnEndOverlap)
+	{
+		ActiveEffectHandles.Add(ActiveEffectHandle, TargetASC);
+	}
+}
+
+void AAuraEffectActor::OnOverlap(AActor* TargetActor)
+{
+	if (InstantEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnOverlap)
+	{
+		ApplyEffectToTarget(TargetActor, InstantGameplayEffectClass);
+	}
+	if (DurationEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnOverlap)
+	{
+		ApplyEffectToTarget(TargetActor, DurationGameplayEffectClass);
+	}
+	if (InfiniteEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnOverlap)
+	{
+		ApplyEffectToTarget(TargetActor, InfiniteGameplayEffectClass);
+	}
+
+}
+
+void AAuraEffectActor::OnEndOverlap(AActor* TargetActor)
+{
+	if (InstantEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnEndOverlap)
+	{
+		ApplyEffectToTarget(TargetActor, InstantGameplayEffectClass);
+	}
+	if (DurationEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnEndOverlap)
+	{
+		ApplyEffectToTarget(TargetActor, DurationGameplayEffectClass);
+	}
+	if (InfiniteEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnEndOverlap)
+	{
+		ApplyEffectToTarget(TargetActor, InfiniteGameplayEffectClass);
+	}
+	// 移除Infinite的效果
+	if (InfiniteEffectRemovalPolicy == EEffectRemovalPolicy::RemoveOnEndOverlap)
+	{
+		UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
+		if (!IsValid(TargetASC)) return;
+
+		// 待移除的GE，不要在循环中删除，先将其加入数组
+		TArray<FActiveGameplayEffectHandle> HandlesToRemove;
+		for (auto& HandlePair : ActiveEffectHandles)
+		{
+			if (TargetASC == HandlePair.Value)
+			{
+				// 1表示移除一层，默认-1表示全部移除
+				TargetASC->RemoveActiveGameplayEffect(HandlePair.Key, 1);
+				HandlesToRemove.Add(HandlePair.Key);
+			}
+		}
+		for (auto& Handle : HandlesToRemove)
+		{
+			ActiveEffectHandles.FindAndRemoveChecked(Handle);
+		}
+	}
 }

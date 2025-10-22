@@ -4,6 +4,7 @@
 #include "Character/AuraCharacter.h"
 
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "HUD/AuraHUD.h"
 #include "Player/AuraPlayerController.h"
@@ -29,6 +30,9 @@ void AAuraCharacter::PossessedBy(AController* NewController)
 
 	// 为服务器初始化Ability Actor
 	InitAbilityActorInfo();
+
+	// 添加能力
+	AddCharacterAbilities();
 }
 
 void AAuraCharacter::OnRep_PlayerState()
@@ -39,6 +43,13 @@ void AAuraCharacter::OnRep_PlayerState()
 	InitAbilityActorInfo();
 }
 
+int32 AAuraCharacter::GetPlayLevel() const
+{
+	AAuraPlayerState* AuraPlayerState = GetPlayerState<AAuraPlayerState>();
+	check(AuraPlayerState);
+	return AuraPlayerState->GetPlayLevel();
+}
+
 void AAuraCharacter::InitAbilityActorInfo()
 {
 	// 获取PlayerState
@@ -46,6 +57,8 @@ void AAuraCharacter::InitAbilityActorInfo()
 	check(AuraPlayerState);
 	// 初始化AbilitySystemComponent，指定Owner和Avatar
 	AuraPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(AuraPlayerState, this);
+	// 调用ASC的初始化设置
+	Cast<UAuraAbilitySystemComponent>(AuraPlayerState->GetAbilitySystemComponent())->AbilityActorInfoSet();
 	AbilitySystemComponent = AuraPlayerState->GetAbilitySystemComponent();
 	AttributeSet = AuraPlayerState->GetAttributeSet();
 
@@ -59,4 +72,5 @@ void AAuraCharacter::InitAbilityActorInfo()
 			AuraHUD->InitOverlay(AuraPlayerController, AuraPlayerState, AbilitySystemComponent, AttributeSet);
 		}
 	}
+	InitiallizeDefaultAbilities();
 }
