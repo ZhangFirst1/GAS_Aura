@@ -31,6 +31,8 @@ public:
 	/** ICombatInterface */
 	virtual int32 GetPlayLevel() const override;
 	virtual void Die() override;
+	virtual void SetCombatTarget_Implementation(AActor* InCombatTarget) override;
+	virtual AActor* GetCombatTarget_Implementation() const override;
 	/** end ICombatInterface */
 
 	UPROPERTY(BlueprintAssignable)
@@ -46,12 +48,16 @@ public:
 	bool bHitReacting = false;
 
 	// 基础移动速度
-	UPROPERTY(BlueprintReadWrite, Category = "Combat")
+	UPROPERTY(EditAnywhere, Category = "Combat")
 	float BaseWalkSpeed = 250.f;
 
 	// 布娃娃存在时间
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	float LifeSpan = 5.f;
+
+	// 蘸豆目标
+	UPROPERTY(BlueprintReadWrite, Category = "Combat")
+	TObjectPtr<AActor> CombatTarget;
 protected:
 	virtual void BeginPlay() override;
 	virtual void InitAbilityActorInfo() override;
@@ -66,9 +72,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UWidgetComponent> HealthProgress;
 
-	// UPROPERTY(EditAnywhere, Category = "AI")
-	// TObjectPtr<UBehaviorTree> BehaviorTree;
-	//
-	// UPROPERTY()
-	// TObjectPtr<AAuraAIController> AuraAIController;
+	// AI组件
+	UPROPERTY(EditAnywhere, Category = "AI")
+	TObjectPtr<UBehaviorTree> BehaviorTree;
+	
+	UPROPERTY()
+	TObjectPtr<AAuraAIController> AuraAIController;
 };

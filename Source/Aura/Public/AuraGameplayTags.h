@@ -49,6 +49,12 @@ public:
 	FGameplayTag Damage_Lightning;
 	FGameplayTag Damage_Arcane;
 	FGameplayTag Damage_Physical;
+
+	FGameplayTag Abilities_Attack;
+	
+	FGameplayTag Montage_Attack_Weapon;
+	FGameplayTag Montage_Attack_RightHand;
+	FGameplayTag Montage_Attack_LeftHand;
 	
 	// 伤害到抵抗类型的映射
 	TMap<FGameplayTag, FGameplayTag> DamageTypesToResistances;

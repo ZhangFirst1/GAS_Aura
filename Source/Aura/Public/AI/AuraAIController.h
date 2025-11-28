@@ -20,7 +20,7 @@ public:
 
 protected:
 	// 行为树
-	// UPROPERTY()
-	// TObjectPtr<UBehaviorTreeComponent> BehaviorTreeComponent;
+	UPROPERTY()
+	TObjectPtr<UBehaviorTreeComponent> BehaviorTreeComponent;
 	
 };

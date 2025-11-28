@@ -191,8 +191,11 @@ void AAuraPlayerController::AbilityInputTagReleased(const FGameplayTag InputTag)
 					Spline->AddSplinePoint(PointLoc, ESplineCoordinateSpace::World);
 				}
 				// 将目的地设置为导航的最后一个点，而非鼠标点击点，防止点击物体内部造成的无法到达
-				CachedDestination = NavPath->PathPoints.Last();
-				bAutoRunning = true;		
+				if (NavPath->PathPoints.Num() > 0)
+				{
+					CachedDestination = NavPath->PathPoints.Last();
+					bAutoRunning = true;
+				}
 			}
 		}
 		// 重置

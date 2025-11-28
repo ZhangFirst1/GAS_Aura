@@ -40,6 +40,7 @@ public:
 
 	
 protected:
+	// 新增属性，是或否暴击和格挡
 	UPROPERTY()
 	bool bIsCriticalHit = false;
 	

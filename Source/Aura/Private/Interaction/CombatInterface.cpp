@@ -8,8 +8,3 @@ int32 ICombatInterface::GetPlayLevel() const
 {
 	return 0;
 }
-
-FVector ICombatInterface::GetCombatSocketLocation()
-{
-	 return FVector();
-}
