@@ -1,5 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
+/*
+ * 自定义的AbilityTask，负责获取鼠标位置并发送给蓝图
+ * 同时处理网络同步问题
+ */
 #pragma once
 
 #include "CoreMinimal.h"

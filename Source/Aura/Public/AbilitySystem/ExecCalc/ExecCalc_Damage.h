@@ -1,5 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
+/*
+ * 自定义的伤害计算类，用在GE_Damage中
+ */
 #pragma once
 
 #include "CoreMinimal.h"

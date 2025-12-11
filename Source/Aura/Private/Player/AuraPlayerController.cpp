@@ -149,8 +149,6 @@ void AAuraPlayerController::CursorTrace()
 			}
 		}
 	}*/
-	
-	
 }
 
 void AAuraPlayerController::AbilityInputTagPressed(const FGameplayTag InputTag)
@@ -243,8 +241,6 @@ UAuraAbilitySystemComponent* AAuraPlayerController::GetASC()
 	return AuraAbilitySystemComponent;
 }
 
-
-
 void AAuraPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -257,14 +253,14 @@ void AAuraPlayerController::SetupInputComponent()
 	AuraInputComponent->BindAction(ShiftAction, ETriggerEvent::Started, this, &AAuraPlayerController::ShiftPressed);
 	AuraInputComponent->BindAction(ShiftAction, ETriggerEvent::Completed, this, &AAuraPlayerController::ShiftReleased);
 
+	// 批量绑定，为每个InputAction绑定 按下、松开、和按住对应的回调
 	AuraInputComponent->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputTagPressed, &ThisClass::AbilityInputTagReleased, &ThisClass::AbilityInputTagHeld);
 }
-
 
 void AAuraPlayerController::Move(const FInputActionValue& InputActionValue)
 {
 	const FVector2D InputAxisVector = InputActionValue.Get<FVector2D>();
-	const FRotator Rotation = GetControlRotation();							// 获取控制器的朝向（由相机决定）
+	const FRotator Rotation = GetControlRotation();									// 获取控制器的朝向（由相机决定）
 	const FRotator YawRotation(0.f, Rotation.Yaw, 0.0f);		        // 只获取Yaw，保证移动在水平面上
 
 	// 根据YawRotation生成旋转矩阵，前后左右会跟随相机朝向

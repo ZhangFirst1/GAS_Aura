@@ -1,5 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
+/* 
+ * 自定义的增强输入组件，实现自定义操作
+ * 目前实现：批量绑定
+ */
 #pragma once
 
 #include "CoreMinimal.h"
@@ -21,6 +24,7 @@ public:
 	
 };
 
+// 绑定
 template <class UserClass, typename PressedFuncType, typename ReleasedFuncType, typename HeldFuncType>
 void UAuraInputComponent::BindAbilityActions(const UAuraInputConfig* InputConfig, UserClass* Object,
 	PressedFuncType PressedFunc, ReleasedFuncType ReleasedFunc, HeldFuncType HeldFunc)

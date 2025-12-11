@@ -1,5 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+/* 可造成多种伤害类型（通过 SetByCaller）的 Gameplay Ability
+ * 作为伤害技能的基类
+ */
 #pragma once
 
 #include "CoreMinimal.h"

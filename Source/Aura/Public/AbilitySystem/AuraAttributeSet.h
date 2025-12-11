@@ -1,5 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+/* 用于存放Aura和敌人的属性数值
+ * 1. 改变前和后处理的逻辑
+ * 2. 实现网络复制
+ * 3. 将Tag映射到对应属性
+ * 4. 处理伤害、恢复等逻辑
+ * 5. 实现漂浮数字
+ */
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,13 +15,14 @@
 #include "AbilitySystemComponent.h"
 #include "AuraAttributeSet.generated.h"
 
+// 为每个属性定义4个Get、Set方法
 #define ATTRIBUTE_ACCESSORS(ClassName, PropertyName) \
 	GAMEPLAYATTRIBUTE_PROPERTY_GETTER(ClassName, PropertyName) \
 	GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName) \
 	GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
 	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
-
+// 将常用信息封装，便于获取和使用
 USTRUCT()
 struct FEffectProperties
 {
@@ -61,7 +70,7 @@ class AURA_API UAuraAttributeSet : public UAttributeSet
 	GENERATED_BODY()
 public:
 	UAuraAttributeSet();
-	// 由于UAttributeSet本质是UObject，无法像UObject自动处理Replicated标记
+	// 由于UAttributeSet本质是UObject，无法像AActor自动处理Replicated标记
 	// 必须重写GetLifetimeReplicatedProps函数
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -167,9 +176,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, ReplicatedUsing = OnRep_Mana, Category = "Vital Attributes")
 	FGameplayAttributeData Mana;
 	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Mana)
-
 	
-
 	/*
 	 *	Meta Attributes  
 	 */
@@ -238,6 +245,7 @@ public:
 	void OnRep_PhysicalResistance(const FGameplayAttributeData& OldPhysicalResistance) const;
 
 private:
+	// 从回调中解析信息，减少重复代码
 	void SetEffectProperties(const struct FGameplayEffectModCallbackData& Data, FEffectProperties& Props) const;
 	void ShowFloatingText(const FEffectProperties& Props, float Damage, bool bBlockedHit, bool bCriticalHit) const;
 };

@@ -1,5 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+/* 继承自UGameplayAbility，作为所有Aura GA的基类
+ * 需要在蓝图中设置启动技能的标签（如：发射火球设置为鼠标左键标签InputTag.LMB）
+ */
 #pragma once
 
 #include "CoreMinimal.h"

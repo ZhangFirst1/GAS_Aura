@@ -9,6 +9,9 @@
 
 void UAuraDamageGameplayAbility::CauseDamage(AActor* TargetActor)
 {
+	/*  Ability 触发 -> CauseDamage(蓝图调用) -> 创建 GameplayEffectSpec（GE_Damage） -> 向 Spec 注入 SetByCaller 数值
+	 *  -> ApplyGameplayEffectSpecToTarget -> GE 触发 Execution Calculation（伤害公式）
+	 */
 	FGameplayEffectSpecHandle DamageSpecHandle = MakeOutgoingGameplayEffectSpec(DamageEffectClass, 1.f);
 	// 遍历多种伤害
 	for (TTuple<FGameplayTag, FScalableFloat> Pair : DamageType)

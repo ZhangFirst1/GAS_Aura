@@ -17,7 +17,7 @@ UAuraAttributeSet::UAuraAttributeSet()
 {
 	const FAuraGameplayTags& GameplayTag = FAuraGameplayTags::Get();
 
-	// 把Tag映射到绑定了函数
+	// 把Tag映射到GetAttribute函数，这样给出一个GameplayTag就可以找到对应的Attribute，用来动态读取或修改属性
 	/*
 	 * Primary Attributes
 	 */
@@ -82,11 +82,26 @@ void UAuraAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, MaxMana, COND_None, REPNOTIFY_Always);
 }
 
+void UAuraAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+{
+	// 此处只会限制查询的值，并不会真正的限制值
+	Super::PreAttributeChange(Attribute, NewValue);
+
+	if (Attribute == GetHealthAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxHealth ());
+	}
+	if (Attribute == GetManaAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxMana ());
+	}
+}
+
 void UAuraAttributeSet::SetEffectProperties(const struct FGameplayEffectModCallbackData& Data, FEffectProperties& Props) const
 {
-	// Source是Effect的施加者，Target是effect的目标
+	// Source是Effect的施加者，Target是Effect的目标
 	// 分别获取Source和Target的Actor、Controller、Character和ASC
-
+	
 	Props.EffectContextHandle = Data.EffectSpec.GetContext();
 	Props.SourceASC = Props.EffectContextHandle.GetOriginalInstigatorAbilitySystemComponent();
 
@@ -112,30 +127,14 @@ void UAuraAttributeSet::SetEffectProperties(const struct FGameplayEffectModCallb
 		Props.TargetCharacter = Cast<ACharacter>(Props.TargetAvatarActor);
 		Props.TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Props.TargetAvatarActor);
 	}
-	
-}
-
-
-
-void UAuraAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
-{
-	// 此处只会限制查询的值，并不会真正的限制值
-	Super::PreAttributeChange(Attribute, NewValue);
-
-	if (Attribute == GetHealthAttribute())
-	{
-		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxHealth ());
-	}
-	if (Attribute == GetManaAttribute())
-	{
-		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxMana ());
-	}
 }
 
 void UAuraAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
 
+	// GAS 在执行 GameplayEffect 时，会把 Mod 数据打包成 FGameplayEffectModCallbackData
+	// 获取相关数据
 	FEffectProperties Props;
 	SetEffectProperties(Data, Props);
 
@@ -143,7 +142,6 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectMo
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
-		UE_LOG(LogTemp, Warning, TEXT("Changed Health On %s: Health :%f"), *Props.TargetAvatarActor->GetName(), GetHealth());
 	}
 	if (Data.EvaluatedData.Attribute == GetManaAttribute())
 	{
@@ -159,7 +157,7 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectMo
 			const float NewHealth = GetHealth() - LocalInComingDamage;
 			SetHealth(FMath::Clamp(NewHealth, 0.f, GetMaxHealth()));
 
-			// 是否致命
+			// 是否致命，是则执行死亡逻辑，否则受击逻辑
 			const bool bFatal = NewHealth <= 0.f;
 			if (bFatal)
 			{

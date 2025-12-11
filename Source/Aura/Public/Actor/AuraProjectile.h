@@ -1,5 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+/*
+ * 生成的投掷物（如火球、石头）
+ */
 #pragma once
 
 #include "CoreMinimal.h"
@@ -19,6 +22,7 @@ class AURA_API AAuraProjectile : public AActor
 public:	
 	AAuraProjectile();
 
+	// 投掷物组件
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovement;
 
@@ -30,14 +34,14 @@ protected:
 
 	UFUNCTION()
 	void OnSphereOverlap(UPrimitiveComponent* OverlapComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<USphereComponent> Sphere;
 private:
 	UPROPERTY(EditDefaultsOnly)
 	float LifeSpan = 15.f;
 	
 	bool bHit = false;
-	
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<USphereComponent> Sphere;
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UNiagaraSystem> ImpactEffect;

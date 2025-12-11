@@ -1,5 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+/* 把输入事件InputAction和Tag绑定在一起
+ *
+ */
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,6 +10,7 @@
 #include "GameplayTagContainer.h"
 #include "AuraInputConfig.generated.h"
 
+// 绑定InputAction和Tag
 USTRUCT(BlueprintType)
 struct FAuraInputAction
 {

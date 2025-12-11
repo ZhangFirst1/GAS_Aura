@@ -28,7 +28,7 @@ public:
 	AAuraPlayerController(); 
 	virtual void PlayerTick(float DeltaTime) override;
 
-	// 客户端RPC，显示伤害数字
+	// 客户端RPC，显示伤害数字，在后处理中调用
 	UFUNCTION(Client, Reliable)
 	void ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter, bool bBlockedHit, bool bCriticalHit);
 protected:
@@ -61,6 +61,7 @@ private:
 	void AbilityInputTagReleased(const FGameplayTag InputTag);
 	void AbilityInputTagHeld(const FGameplayTag InputTag);
 
+	// UAuraInputConfig组合了 InputAction 和 Tag
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UAuraInputConfig> InputConfig;
 
