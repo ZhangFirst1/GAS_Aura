@@ -1,0 +1,44 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Kismet/BlueprintAsyncActionBase.h"
+#include "GameplayTagContainer.h"
+#include "WaitCooldownChange.generated.h"
+
+struct FActiveGameplayEffectHandle;
+struct FGameplayTag;
+struct FGameplayEffectSpec;
+class UAbilitySystemComponent;
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCooldownChangeSignature, float, TimeRemaining);
+
+/**
+ * 
+ */
+UCLASS()
+class AURA_API UWaitCooldownChange : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+public:
+	// 冷却开始和结束的委托
+	UPROPERTY(BlueprintAssignable)
+	FCooldownChangeSignature CooldownStart;
+
+	UPROPERTY(BlueprintAssignable)
+	FCooldownChangeSignature CooldownEnd;
+
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true"))
+	static UWaitCooldownChange* CreateWaitCooldownChange(UAbilitySystemComponent* AbilitySystemComponent, const FGameplayTag& InCooldownTag);
+
+	UFUNCTION(BlueprintCallable)
+	void EndTask();
+protected:
+	UPROPERTY()
+	TObjectPtr<UAbilitySystemComponent> ASC;
+
+	FGameplayTag CooldownTag;
+
+	void CooldownTagChanged(const FGameplayTag InCooldownTag, int32 NewCount);
+	void OnActivateEffectAdded(UAbilitySystemComponent* TargetASC, const FGameplayEffectSpec& SpecApplied, FActiveGameplayEffectHandle ActivateEffectHandle);
+};

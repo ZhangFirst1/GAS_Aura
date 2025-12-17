@@ -21,7 +21,7 @@ AAuraPlayerController::AAuraPlayerController()
 {
 	// 该控制器对象会在网络环境复制，在客户端和服务器保持一致
 	bReplicates = true;
-
+	
 	Spline = CreateDefaultSubobject<USplineComponent>("Spline");
 }
 
@@ -246,7 +246,7 @@ void AAuraPlayerController::SetupInputComponent()
 	Super::SetupInputComponent();
 
 	// 将控制器自带的输入组件InputComponent转为 自定义的增强输入的组件
-	UAuraInputComponent* AuraInputComponent = CastChecked<UAuraInputComponent>(InputComponent);
+	 UAuraInputComponent* AuraInputComponent = CastChecked<UAuraInputComponent>(InputComponent);
 
 	// 绑定
 	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAuraPlayerController::Move);
@@ -256,6 +256,7 @@ void AAuraPlayerController::SetupInputComponent()
 	// 批量绑定，为每个InputAction绑定 按下、松开、和按住对应的回调
 	AuraInputComponent->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputTagPressed, &ThisClass::AbilityInputTagReleased, &ThisClass::AbilityInputTagHeld);
 }
+
 
 void AAuraPlayerController::Move(const FInputActionValue& InputActionValue)
 {
@@ -274,6 +275,5 @@ void AAuraPlayerController::Move(const FInputActionValue& InputActionValue)
 		ControlledPawn->AddMovementInput(RightDirection, InputAxisVector.X);
 	}
 }
-
 
 
