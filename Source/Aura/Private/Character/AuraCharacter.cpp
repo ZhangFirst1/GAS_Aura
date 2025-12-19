@@ -22,6 +22,8 @@ AAuraCharacter::AAuraCharacter()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
+
+	CharacterClass = ECharacterClass::Elementalist;
 }
 
 void AAuraCharacter::PossessedBy(AController* NewController)
@@ -41,6 +43,18 @@ void AAuraCharacter::OnRep_PlayerState()
 
 	// 为客户端初始化Ability Actor
 	InitAbilityActorInfo();
+}
+
+void AAuraCharacter::AddToXP_Implementation(int32 InXP)
+{
+	AAuraPlayerState* AuraPlayerState = GetPlayerState<AAuraPlayerState>();
+	check(AuraPlayerState);
+	AuraPlayerState->AddXP(InXP);
+}
+
+void AAuraCharacter::LevelUp_Implementation()
+{
+	
 }
 
 int32 AAuraCharacter::GetPlayLevel() const

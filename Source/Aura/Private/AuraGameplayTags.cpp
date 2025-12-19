@@ -172,6 +172,14 @@ void FAuraGameplayTags::InitializeNativeGameplayTags()
 		FString("Resistance To Physical Type")
 		);
 
+	/*
+	 * Meta Attributes
+	 */
+
+	GameplayTags.Attributes_Meta_IncomingXP = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Meta.IncomingXP"),
+		FString("Incoming XP Meta Attribute")
+		);
 	
 	/*
 	 * Effects
