@@ -1,0 +1,31 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "UI/WidgetController/SpellMenuWidgetController.h"
+
+#include "AbilitySystem/AuraAbilitySystemComponent.h"
+#include "Player/AuraPlayerState.h"
+
+void USpellMenuWidgetController::BroadcastInitialValues()
+{
+	BroadcastAbilityInfo();
+	SpellPointChanged.Broadcast(GetAuraPS()->GetSpellPoints());
+}
+
+void USpellMenuWidgetController::BindCallbacksToDependencies()
+{
+	GetAuraASC()->AbilityStatusChanged.AddLambda([this](const FGameplayTag& AbilityTag, const FGameplayTag& StatusTag)
+	{
+		if (AbilityInfo)
+		{
+			FAuraAbilityInfo Info = AbilityInfo->FindAbilityInfoByTag(AbilityTag);
+			Info.StatusTag = StatusTag;
+			AbilityInfoDelegate.Broadcast(Info);
+		}
+	});
+
+	GetAuraPS()->OnSpellPointsChangedDelegate.AddLambda([this](int32 SpellPoints)
+	{ 
+		SpellPointChanged.Broadcast(SpellPoints);
+	});
+}

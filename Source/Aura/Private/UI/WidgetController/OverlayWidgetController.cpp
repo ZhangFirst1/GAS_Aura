@@ -11,7 +11,6 @@
 
 void UOverlayWidgetController::BroadcastInitialValues()
 {
-	const UAuraAttributeSet* AuraAttributeSet = CastChecked<UAuraAttributeSet>(AttributeSet);
 	OnHealthChanged.Broadcast(AuraAttributeSet->GetHealth());
 	OnMaxHealthChanged.Broadcast(AuraAttributeSet->GetMaxHealth());
 	OnManaChanged.Broadcast(AuraAttributeSet->GetMana());
@@ -21,52 +20,54 @@ void UOverlayWidgetController::BroadcastInitialValues()
 // 把控制器自己的处理函数（HealthChanged、MaxHealthChanged 等）绑定到 GAS 的属性变化 delegate 上
 void UOverlayWidgetController::BindCallbacksToDependencies()
 {
-	AAuraPlayerState* AuraPlayerState = CastChecked<AAuraPlayerState>(PlayerState);
-	AuraPlayerState->OnXPChangedDelegate.AddUObject(this, &UOverlayWidgetController::OnXPChanged);
-	
-	const UAuraAttributeSet* AuraAttributeSet = CastChecked<UAuraAttributeSet>(AttributeSet);
+	GetAuraPS()->OnXPChangedDelegate.AddUObject(this, &UOverlayWidgetController::OnXPChanged);
+	GetAuraPS()->OnLevelChangedDelegate.AddLambda(
+		[this](int32 NewLevel)
+	{
+		OnPlayerLevelChangedDelegate.Broadcast(NewLevel);
+	});
 
 	//  GetGameplayAttributeValueChange是多播委托，而非动态多播委托，用AddUObject
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AuraAttributeSet->GetHealthAttribute()).AddLambda(
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(GetAuraAS()->GetHealthAttribute()).AddLambda(
 		[this](const FOnAttributeChangeData& Data)
 		{
 			OnHealthChanged.Broadcast(Data.NewValue);
 		}
 	);
 
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AuraAttributeSet->GetMaxHealthAttribute()).AddLambda(
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(GetAuraAS()->GetMaxHealthAttribute()).AddLambda(
 		[this](const FOnAttributeChangeData& Data)
 		{
 			OnMaxHealthChanged.Broadcast(Data.NewValue);
 		}
 	);
 
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AuraAttributeSet->GetManaAttribute()).AddLambda(
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(GetAuraAS()->GetManaAttribute()).AddLambda(
 		[this](const FOnAttributeChangeData& Data)
 		{
 			OnManaChanged.Broadcast(Data.NewValue);
 		}
 	);
 
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AuraAttributeSet->GetMaxManaAttribute()).AddLambda(
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(GetAuraAS()->GetMaxManaAttribute()).AddLambda(
 		[this](const FOnAttributeChangeData& Data)
 		{
 			OnMaxManaChanged.Broadcast(Data.NewValue);
 		}
 	);
 
-	if (UAuraAbilitySystemComponent* AuraASC = CastChecked<UAuraAbilitySystemComponent>(AbilitySystemComponent))
+	if (GetAuraASC())
 	{
 		// 能力已经授予则立刻初始化，未给则绑定回调等待广播，防止网络不同步的问题
-		if (AuraASC->bStartupAbilitiesGiven)
+		if (GetAuraASC()->bStartupAbilitiesGiven)
 		{
-			OnInitializeStartupAbilities(AuraASC);
+			BroadcastAbilityInfo();
 		}else
 		{
-			AuraASC->AbilitiesGivenDelegate.AddUObject(this, &UOverlayWidgetController::OnInitializeStartupAbilities);
+			GetAuraASC()->AbilitiesGivenDelegate.AddUObject(this, &UOverlayWidgetController::BroadcastAbilityInfo);
 		}
 		
-		AuraASC->EffectAssetTags.AddLambda(
+		GetAuraASC()->EffectAssetTags.AddLambda(
 			[this](const FGameplayTagContainer& AssetTags)
 			{
 				for (const FGameplayTag& Tag : AssetTags)
@@ -88,29 +89,9 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 
 }
 
-void UOverlayWidgetController::OnInitializeStartupAbilities(UAuraAbilitySystemComponent* AuraAbilitySystemComponent)
-{
-	// UI部分不应该知道ASC中的内部结构，创建一个委托并绑定函数，再在ASC中对每个能力执行
-	if (!AuraAbilitySystemComponent->bStartupAbilitiesGiven) return;
-
-	FForEachAbility BroadcastDelegate;
-	BroadcastDelegate.BindLambda([this, AuraAbilitySystemComponent](const FGameplayAbilitySpec& AbilitySpec)
-	{
-		// 从 AbilitySpec 获取 FAuraAbilityInfo
-		FAuraAbilityInfo Info = AbilityInfo->FindAbilityInfoByTag(AuraAbilitySystemComponent->GetAbilityTagFromSpec(AbilitySpec));
-		// 从 AbilitySpec 获取 InputTag(技能对应的按键)
-		Info.InputTag = AuraAbilitySystemComponent->GetInputTagFromSpec(AbilitySpec);
-		// 会由蓝图绑定，把 AuraAbilityInfo 广播给 UI控件
-		AbilityInfoDelegate.Broadcast(Info);
-	});
-	// 对每个技能调用广播
-	AuraAbilitySystemComponent->ForEachAbility(BroadcastDelegate);
-}
-
 void UOverlayWidgetController::OnXPChanged(int32 NewXP)
 {
-	AAuraPlayerState* AuraPlayerState = CastChecked<AAuraPlayerState>(PlayerState);
-	const ULevelUpInfo* LevelUpInfo = AuraPlayerState->LevelUpInfo;
+	const ULevelUpInfo* LevelUpInfo = GetAuraPS()->LevelUpInfo;
 	checkf(LevelUpInfo, TEXT("Unable to find LevelUpInfo"));
 
 	int32 Level = LevelUpInfo->FindLevelXP(NewXP);
@@ -125,9 +106,7 @@ void UOverlayWidgetController::OnXPChanged(int32 NewXP)
 		const int32 XPForThisLevel = NewXP - PreviousLevelUpRequirement;
 
 		const float XPBarPercent = static_cast<float>(XPForThisLevel) / static_cast<float>(DeltaLevelRequirement);
-
-		GEngine->AddOnScreenDebugMessage(2, 3.f, FColor::Red,
-			FString::Printf(TEXT("Level: %d, DeltaLevelRequirement: %d, XPForThisLevel: %d, XPBarPercent:%f"), Level, DeltaLevelRequirement, XPForThisLevel, XPBarPercent));
+		
 		OnXPPercentChangedDelegate.Broadcast(XPBarPercent);
 	}
 }

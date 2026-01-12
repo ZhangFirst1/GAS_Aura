@@ -80,6 +80,8 @@ public:
 	// Gameplay属性修改执行完后的回调
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
+	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
+
 	// 将Tag映射到 一个不带参数，返回FGameplayAttribute的函数指针
 	TMap<FGameplayTag, TStaticFuncPtr<FGameplayAttribute()>> TagsToAttributes;
 	
@@ -253,4 +255,7 @@ private:
 	void SetEffectProperties(const struct FGameplayEffectModCallbackData& Data, FEffectProperties& Props) const;
 	void ShowFloatingText(const FEffectProperties& Props, float Damage, bool bBlockedHit, bool bCriticalHit) const;
 	void SendXPEvnet(const FEffectProperties& Props);
+
+	bool bTopOffHealth = false;
+	bool bTopOffMana = false;
 };

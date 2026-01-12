@@ -3,8 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystem/Data/AbilityInfo.h"
 #include "UObject/NoExportTypes.h"
 #include "AuraWidgetController.generated.h"
+
+class UAuraAttributeSet;
+class UAuraAbilitySystemComponent;
+class AAuraPlayerState;
+class AAuraPlayerController;
+class UAbilityInfo;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerStatChangedSignature, int32, NewValue);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityInfoSignature, const FAuraAbilityInfo, Info);
 
 class UAbilitySystemComponent;
 class UAttributeSet;
@@ -31,6 +41,7 @@ struct FWidgetControllerParams
 	TObjectPtr<UAttributeSet> AttributeSet = nullptr;
 };
 
+
 /**
  * 
  */
@@ -46,7 +57,15 @@ public:
 	virtual void BroadcastInitialValues();
 	
 	virtual void BindCallbacksToDependencies();
+
+	UPROPERTY(BlueprintAssignable, Category = "GAS | Messages")
+	FAbilityInfoSignature AbilityInfoDelegate;
+
+	void BroadcastAbilityInfo();
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget Data")
+	TObjectPtr<UAbilityInfo> AbilityInfo;
+	
 	// 用一组变量用来获取所有信息和数据
 	UPROPERTY(BlueprintReadOnly, Category="WidgetController")
 	TObjectPtr<APlayerController> PlayerController;
@@ -59,4 +78,21 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly, Category="WidgetController")
 	TObjectPtr<UAttributeSet> AttributeSet;
+
+	UPROPERTY(BlueprintReadOnly, Category="WidgetController")
+	TObjectPtr<AAuraPlayerController> AuraPlayerController;
+	
+	UPROPERTY(BlueprintReadOnly, Category="WidgetController")
+	TObjectPtr<AAuraPlayerState> AuraPlayerState;
+	
+	UPROPERTY(BlueprintReadOnly, Category="WidgetController")
+	TObjectPtr<UAuraAbilitySystemComponent> AuraAbilitySystemComponent;
+	
+	UPROPERTY(BlueprintReadOnly, Category="WidgetController")
+	TObjectPtr<UAuraAttributeSet> AuraAttributeSet;
+
+	AAuraPlayerController* GetAuraPC();
+	AAuraPlayerState* GetAuraPS();
+	UAuraAbilitySystemComponent* GetAuraASC();
+	UAuraAttributeSet* GetAuraAS();
 };
