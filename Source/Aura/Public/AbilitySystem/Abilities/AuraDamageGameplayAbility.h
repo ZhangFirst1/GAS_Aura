@@ -6,6 +6,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AuraAbilityTypes.h"
 #include "AbilitySystem/Abilities/AuraGameplayAbility.h"
 #include "AuraDamageGameplayAbility.generated.h"
 
@@ -21,14 +22,45 @@ public:
 	// 造成伤害
 	UFUNCTION(BlueprintCallable)
 	void CauseDamage(AActor* TargetActor);
+
+	// 创建 DamageEffectParams
+	UFUNCTION(BlueprintPure)
+	FDamageEffectParams MakeDamageEffectParamsFromClassDefaults(AActor* TargetActor = nullptr) const;
 protected:
 	// 施加的伤害效果
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
 
-	// 根据伤害类型获得数值
+	// 伤害类型和数值
 	UPROPERTY(EditDefaultsOnly, Category = "Damage")
-	TMap<FGameplayTag, FScalableFloat> DamageType;
+	FGameplayTag DamageType;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Damage") 
+	FScalableFloat Damage;
+
+	// Debuff 信息
+	UPROPERTY(EditDefaultsOnly, Category = "Damage") 
+	float DebuffChance = 20.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Damage") 
+	float DebuffDamage = 5.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Damage") 
+	float DebuffFrequency = 1.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Damage") 
+	float DebuffDuration = 5.f;
+
+	// 死亡冲击
+	UPROPERTY(EditDefaultsOnly, Category = "Damage") 
+	float DeathImpulseMagnitude = 1000.f;
+
+	// 击退
+	UPROPERTY(EditDefaultsOnly, Category = "Damage") 
+	float KnockbackForceMagnitude = 1000.f;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Damage")
+	float KnockbackChance = 0.f;
 
 	// 从蒙太奇数组中随机返回一个
 	UFUNCTION(BlueprintPure)

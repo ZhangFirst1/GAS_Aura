@@ -19,6 +19,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityInfoSignature, const FAuraAb
 class UAbilitySystemComponent;
 class UAttributeSet;
 
+// 辅助结构体，创建WidgetController时传递
 USTRUCT(BlueprintType)
 struct FWidgetControllerParams
 {
@@ -41,7 +42,6 @@ struct FWidgetControllerParams
 	TObjectPtr<UAttributeSet> AttributeSet = nullptr;
 };
 
-
 /**
  * 
  */
@@ -50,17 +50,22 @@ class AURA_API UAuraWidgetController : public UObject
 {
 	GENERATED_BODY()
 public:
+	// 初始化函数，Params中的值赋值给成员变量
 	UFUNCTION(BlueprintCallable)
 	void SetWidgetControllerParams(const FWidgetControllerParams& Params);
-	
+
+	// 广播初始值
 	UFUNCTION(BlueprintCallable)
 	virtual void BroadcastInitialValues();
-	
+
+	// 绑定回调函数
 	virtual void BindCallbacksToDependencies();
 
+	// 在蓝图的各个Globe会响应
 	UPROPERTY(BlueprintAssignable, Category = "GAS | Messages")
 	FAbilityInfoSignature AbilityInfoDelegate;
 
+	// 执行广播的具体逻辑函数
 	void BroadcastAbilityInfo();
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget Data")

@@ -30,6 +30,7 @@ void UAuraWidgetController::BroadcastAbilityInfo()
 	// UI部分不应该知道ASC中的内部结构，创建一个委托并绑定函数，再在ASC中对每个能力执行
 	if (!GetAuraASC()->bStartupAbilitiesGiven) return;
 
+	// 准备一个委托，用来处理每个技能
 	FForEachAbility BroadcastDelegate;
 	BroadcastDelegate.BindLambda([this](const FGameplayAbilitySpec& AbilitySpec)
 	{

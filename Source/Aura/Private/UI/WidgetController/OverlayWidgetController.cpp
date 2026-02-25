@@ -4,6 +4,7 @@
 #include "UI/WidgetController/OverlayWidgetController.h"
 
 #include "AttributeSet.h"
+#include "AuraGameplayTags.h"
 #include "AbilitySystem/AuraAbilitySystemComponent.h"
 #include "AbilitySystem/AuraAttributeSet.h"
 #include "AbilitySystem/Data/LevelUpInfo.h"
@@ -58,6 +59,7 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 
 	if (GetAuraASC())
 	{
+		GetAuraASC()->AbilityEquipped.AddUObject(this, &UOverlayWidgetController::OnAbilityEquipped);
 		// 能力已经授予则立刻初始化，未给则绑定回调等待广播，防止网络不同步的问题
 		if (GetAuraASC()->bStartupAbilitiesGiven)
 		{
@@ -109,4 +111,23 @@ void UOverlayWidgetController::OnXPChanged(int32 NewXP)
 		
 		OnXPPercentChangedDelegate.Broadcast(XPBarPercent);
 	}
+}
+
+void UOverlayWidgetController::OnAbilityEquipped(const FGameplayTag& AbilityTag, const FGameplayTag& StatusTag,
+	const FGameplayTag& Slot, const FGameplayTag& PreviousSlot) const 
+{
+	const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+
+	// 清理旧slot
+	FAuraAbilityInfo LastSlotInfo;
+	LastSlotInfo.StatusTag = GameplayTags.Abilities_Status_Unlocked;	// 状态设置为未解锁
+	LastSlotInfo.InputTag = PreviousSlot;								// 定位到技能之前所在的槽位
+	LastSlotInfo.AbilityTag = GameplayTags.Abilities_None;				// 技能设置为None
+	AbilityInfoDelegate.Broadcast(LastSlotInfo);						// 广播给UI
+
+	// 更新新槽位
+	FAuraAbilityInfo Info = AbilityInfo->FindAbilityInfoByTag(AbilityTag);
+	Info.StatusTag = StatusTag;
+	Info.InputTag = Slot;
+	AbilityInfoDelegate.Broadcast(Info);
 }

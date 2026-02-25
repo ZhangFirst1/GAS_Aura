@@ -20,4 +20,13 @@ public:
 	// 游戏刚开始就赋予的启动技能的标签
     UPROPERTY(EditDefaultsOnly, Category = "Input")
     FGameplayTag StartupInputTag;
+
+	// 获取文本框内容
+	virtual FString	GetDescription(int32 Level);
+	virtual FString	GetNextLevelDescription(int32 Level);
+	static FString GetLockedDescription(int32 Level);
+protected:
+	// 获取法力消耗和冷却时间
+	float GetManaCost(float InLevel = 1.f) const;
+	float GetCooldown(float InLevel = 1.f) const;
 };

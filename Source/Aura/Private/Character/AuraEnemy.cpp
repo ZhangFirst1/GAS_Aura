@@ -66,11 +66,14 @@ int32 AAuraEnemy::GetPlayLevel_Implementation() const
 	return Level;
 }
 
-void AAuraEnemy::Die()
+void AAuraEnemy::Die(const FVector& DeathImpulse)
 {
+	if (bIsDead) return;
+	bIsDead = true;
+	
 	SetLifeSpan(LifeSpan);
 	if (AuraAIController) AuraAIController->GetBlackboardComponent()->SetValueAsBool(FName("Dead"), true);
-	Super::Die();
+	Super::Die(DeathImpulse);
 }
 
 void AAuraEnemy::SetCombatTarget_Implementation(AActor* InCombatTarget)
@@ -148,6 +151,7 @@ void AAuraEnemy::InitAbilityActorInfo()
 	{
 		InitiallizeDefaultAbilities();
 	}
+	OnAscRegistered.Broadcast(AbilitySystemComponent);
 }
 
 void AAuraEnemy::InitiallizeDefaultAbilities() const
