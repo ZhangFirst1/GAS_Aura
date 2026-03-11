@@ -6,7 +6,6 @@
 #include "Character/AuraCharacterBase.h"
 #include "UI/WidgetController/OverlayWidgetController.h"
 #include "Interaction/EnemyInterface.h"
-#include "AbilitySystem/Data/CharacterClassInfo.h"
 #include "AuraEnemy.generated.h"
 
 class UBehaviorTree;
@@ -47,10 +46,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Combat")
 	bool bHitReacting = false;
 
-	// 基础移动速度
-	UPROPERTY(EditAnywhere, Category = "Combat")
-	float BaseWalkSpeed = 250.f;
-
 	// 布娃娃存在时间
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	float LifeSpan = 5.f;
@@ -62,6 +57,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void InitAbilityActorInfo() override;
 	virtual void InitiallizeDefaultAbilities() const override;
+	virtual void StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount) override;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
 	int32 Level = 1;

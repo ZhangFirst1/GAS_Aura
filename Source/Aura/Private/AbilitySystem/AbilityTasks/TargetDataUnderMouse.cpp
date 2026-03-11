@@ -4,6 +4,7 @@
 #include "AbilitySystem/AbilityTasks/TargetDataUnderMouse.h"
 
 #include "AbilitySystemComponent.h"
+#include "Aura/Aura.h"
 
 /*
 *[客户端]
@@ -71,7 +72,7 @@ void UTargetDataUnderMouse::SendMouseCursorData()
 	// 获取鼠标位置
 	APlayerController* PC = Ability->GetCurrentActorInfo()->PlayerController.Get();
 	FHitResult CursorHit;
-	PC->GetHitResultUnderCursor(ECC_Visibility, false, CursorHit);
+	PC->GetHitResultUnderCursor(ECC_Target, false, CursorHit);
 
 	// GAS所有目标信息需要包装在DataHandle中
 	FGameplayAbilityTargetDataHandle DataHandle;

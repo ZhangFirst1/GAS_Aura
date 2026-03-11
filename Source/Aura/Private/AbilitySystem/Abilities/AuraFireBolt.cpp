@@ -5,6 +5,7 @@
 
 #include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "Interaction/CombatInterface.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 #include "Actor/AuraProjectile.h"
 
 FString UAuraFireBolt::GetDescription(int32 Level)
@@ -108,9 +109,10 @@ void UAuraFireBolt::SpawnProjectiles(const FVector& ProjectileTargetLocation, co
 	if (bOverridePitch) Rotation.Pitch = PitchOverride;
 
 	const FVector Forward = Rotation.Vector();
+	const int32 EffectiveNumProjectiles = FMath::Min(ProjectileNums, GetAbilityLevel());
+	TArray<FRotator> Rotations = UAuraAbilitySystemLibrary::EvenlySpacedRotators(Forward, FVector::UpVector, ProjectileSpread, EffectiveNumProjectiles);
 
-	TArray<FRotator> Rotations = UAuraAbilitySystemLibrary::EvenlySpacedRotators(Forward, FVector::UpVector, ProjectileSpread, ProjectileNums);
-
+	// 遍历所有旋转方向
 	for (const FRotator& Rot : Rotations)
 	{
 		FTransform SpawnTransform;
@@ -124,7 +126,26 @@ void UAuraFireBolt::SpawnProjectiles(const FVector& ProjectileTargetLocation, co
 	
 		// 创建DamageEffect
 		Projectile->DamageEffectParams = MakeDamageEffectParamsFromClassDefaults();
-	
+
+		// 处理追踪
+		if (HomingTarget && HomingTarget->Implements<UCombatInterface>())
+		{
+			// 让投射物的组件直接追踪该目标的根组件
+			Projectile->ProjectileMovement->HomingTargetComponent = HomingTarget->GetRootComponent();
+		}
+		else
+		{
+			// 不是敌人则创建一个临时的场景组件放在目标位置
+			Projectile->HomingTargetSceneComponent = NewObject<USceneComponent>(USceneComponent::StaticClass());
+			Projectile->HomingTargetSceneComponent->SetWorldLocation(ProjectileTargetLocation);
+			Projectile->ProjectileMovement->HomingTargetComponent= Projectile->HomingTargetSceneComponent;
+		}
+		// 配置追踪加速度和开关
+		Projectile->ProjectileMovement->HomingAccelerationMagnitude = FMath::FRandRange(HomingAccelerationMin, HomingAccelerationMax);
+		Projectile->ProjectileMovement->bIsHomingProjectile = bLaunchHomingProjectiles;
+
+		// 完成生成，此时才会触发 Projectile 的 BeginPlay() 和构造函数后的逻辑
 		Projectile->FinishSpawning(SpawnTransform);
 	}
+	
 }

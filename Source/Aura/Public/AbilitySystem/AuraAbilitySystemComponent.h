@@ -18,6 +18,8 @@ DECLARE_MULTICAST_DELEGATE(FAbilityGiven);
 DECLARE_DELEGATE_OneParam(FForEachAbility, const FGameplayAbilitySpec&);
 DECLARE_MULTICAST_DELEGATE_ThreeParams(FAbilityStatusChanged, const FGameplayTag& /* AbilityTag */, const FGameplayTag& /* StatusTag */, int32 AbilityLevel /*AbilityLevel*/);
 DECLARE_MULTICAST_DELEGATE_FourParams(FAbilityEquipped, const FGameplayTag& /* AbilityTag */, const FGameplayTag& /* StatusTag */, const FGameplayTag& /* Slot */, const FGameplayTag& /* PreviousSlot */)
+DECLARE_MULTICAST_DELEGATE_OneParam(FDeactivatePassiveAbility, const FGameplayTag& /*AbilityTag*/)
+DECLARE_MULTICAST_DELEGATE_TwoParams(FActivatePassiveEffect, const FGameplayTag& /*AbilityTag*/, bool /*bActivate*/)
 
 /**
  * 
@@ -35,6 +37,8 @@ public:
 	FAbilityGiven AbilitiesGivenDelegate;
 	FAbilityStatusChanged AbilityStatusChanged;
 	FAbilityEquipped AbilityEquipped;
+	FDeactivatePassiveAbility DeactivatePassiveAbility;
+	FActivatePassiveEffect ActivatePassiveEffect;
 
 	// 为角色添加出生就有的技能
 	void AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StartupAbilities);
@@ -42,6 +46,7 @@ public:
 	bool bStartupAbilitiesGiven = false;
 
 	// 根据Tag查找能力，并激活 / 释放
+	void AbilityInputTagPressed(const FGameplayTag& InputTag);
 	void AbilityInputTagHeld(const FGameplayTag& InputTag);
 	void AbilityInputTagReleased(const FGameplayTag& InputTag);
 	void ForEachAbility(const FForEachAbility& Delegate);
@@ -51,7 +56,17 @@ public:
 	static FGameplayTag GetInputTagFromSpec(const FGameplayAbilitySpec& AbilitySpec);
 	static FGameplayTag GetStatusFromSpec(const FGameplayAbilitySpec& AbilitySpec);
 	FGameplayTag GetStatusFromAbilityTag(const FGameplayTag& AbilityTag);
-	FGameplayTag GetInputTagFromAbilityTag(const FGameplayTag& AbilityTag);
+	FGameplayTag GetSlotFromAbilityTag(const FGameplayTag& AbilityTag);
+	bool SlotIsEmpty(const FGameplayTag& Slot);												// slot是否为空
+	bool AbilityHasSlot(const FGameplayAbilitySpec& Spec, const FGameplayTag& Slot) const;	// Ability是否有slot
+	FGameplayAbilitySpec* GetSpecWithSlot(const FGameplayTag& Slot);						// 获取Slot的AbilitySpec
+	bool IsPassiveAbility(const FGameplayAbilitySpec& Spec) const;							// 是否为被动技能
+	static bool AbilityHasSlot(FGameplayAbilitySpec& Spec, const FGameplayTag& Slot);		// Ability是否分配了某个slot
+	static bool AbilityHasAnySlot(const FGameplayAbilitySpec& Spec);						// Ability是否分配了任意的slot
+	static void AssignSlotToAbility(FGameplayAbilitySpec& Spec, const FGameplayTag& Slot);	// 为Ability分配Slot
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastActivatePassiveEffect(const FGameplayTag& AbilityTag, bool bActivate);
 
 	// 根据Tag获取FGameplayAbilitySpec
 	FGameplayAbilitySpec* GetSpecFromAbilityTag(const FGameplayTag& AbilityTag);
@@ -72,20 +87,18 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerEquipAbility(const FGameplayTag& AbilityTag, const FGameplayTag& SlotTag);
 
+	UFUNCTION(Client, Reliable)
 	void ClientEquipAbility(const FGameplayTag& AbilityTag, const FGameplayTag& Status, const FGameplayTag& Slot, const FGameplayTag& PreviousSlot);
 
 	// 根据AbilityTag获取文本框描述信息
 	bool GetDescriptionsByAbilityTag(const FGameplayTag& AbilityTag, FString& OutDescription, FString& OutNextLevelDescription);
 
 	// 清除Slot
-	void ClearSlot(FGameplayAbilitySpec* Spec);
+	static void ClearSlot(FGameplayAbilitySpec* Spec);
 	void ClearAbilitiesOfSlot(const FGameplayTag& Slot);
-	// Spec中是否有Slot的标签
-	static bool AbilityHasSlot(FGameplayAbilitySpec* Spec, const FGameplayTag& Slot);
 protected:
 	// 在客户端复制ActivateAbilities
 	virtual void OnRep_ActivateAbilities() override;
-
 	
 	// 应用Effect，获取并广播所有Tag
 	// Client表示客户端RPC，在服务器上执行，下发到客户端，Reliable表示可靠传输

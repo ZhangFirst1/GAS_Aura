@@ -81,6 +81,12 @@ public:
 	
 	FGameplayTag Abilities_Fire_FireBolt;
 	FGameplayTag Abilities_Lightning_Electrocute;
+	FGameplayTag Abilities_Arcane_ArcaneShards;
+
+	// 被动
+	FGameplayTag Abilities_Passive_HaloOfProtection;
+	FGameplayTag Abilities_Passive_LifeSiphon;
+	FGameplayTag Abilities_Passive_ManaSiphon;
 
 	FGameplayTag Cooldown_Fire_FireBolt;
 	
@@ -94,11 +100,18 @@ public:
 	FGameplayTag Montage_Attack_3;
 	FGameplayTag Montage_Attack_4;
 	
-	FGameplayTag Effects_HitReact;
-	
 	// 伤害到抵抗类型 和 Debuff的映射
 	TMap<FGameplayTag, FGameplayTag> DamageTypesToResistances;
 	TMap<FGameplayTag, FGameplayTag> DamageTypesToDebuffs;
+	
+	FGameplayTag Effects_HitReact;
+
+	// 用于禁用某些功能
+	FGameplayTag Player_Block_InputPressed;
+	FGameplayTag Player_Block_InputHeld;
+	FGameplayTag Player_Block_InputReleased;
+	FGameplayTag Player_Block_CursorTrace;
+	
 private:
 	static FAuraGameplayTags GameplayTags;
 };
