@@ -123,7 +123,6 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Lightning, DamageStatics().LightningResistanceDef);
 	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Arcane, DamageStatics().ArcaneResistanceDef);
 	TagsToCaptureDefs.Add(Tags.Attributes_Resistance_Physical, DamageStatics().PhysicalResistanceDef);
-
 	
 	const UAbilitySystemComponent* SourceASC = ExecutionParams.GetSourceAbilitySystemComponent();
 	const UAbilitySystemComponent* TargetASC = ExecutionParams.GetTargetAbilitySystemComponent();
@@ -154,22 +153,27 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	// Debuff
 	DetermineDebuff(ExecutionParams, Spec, EvaluateParams, TagsToCaptureDefs);
 	
-	// 从caller通过标签获取伤害
 	float Damage = 0.f;
+	// 遍历伤害类型到抵抗类型的标签
 	for (const auto& Pair : FAuraGameplayTags::Get().DamageTypesToResistances)
 	{
 		const FGameplayTag DamageTag = Pair.Key;
 		const FGameplayTag ResistanceTag = Pair.Value;
 		checkf(TagsToCaptureDefs.Contains(ResistanceTag), TEXT("TagsToCaptureDefs doesn't contain Tag[%s]"), *ResistanceTag.ToString());
+
+		// 获取对应的抗性属性抓取定义（CaptureDef用于告诉GAS去哪里、怎么获取这个属性的值）
 		const FGameplayEffectAttributeCaptureDefinition CaptureDef = TagsToCaptureDefs[ResistanceTag];
-		
+
+		// 从 Gameplay Effect Spec 中，获取施法者（Caller）通过标签传入的基础伤害值
 		float DamageTypeValue = Spec.GetSetByCallerMagnitude(Pair.Key, false);
 		if (DamageTypeValue <= 0.f) continue;
 
+		// 根据抗性属性抓取定义，计算出受击着当前的实际抗性值，并存入 Resistance 变量中
 		float Resistance = 0.f;
 		ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(CaptureDef, EvaluateParams, Resistance);
 		Resistance = FMath::Clamp(Resistance, 0.f, 100.f);
-		
+
+		// 最终伤害 = 基础伤害 * ((100 - 抗性) / 100)
 		DamageTypeValue *= (100.f - Resistance) / 100.f;
 
 		// 处理范围伤害
@@ -177,25 +181,32 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 		{
 			if (ICombatInterface* CombatInterface = Cast<ICombatInterface>(TargetAvatar))
 			{
+				/*
+				 *	注意，ApplyRadialDamageWithFalloff函数并没有返回值，那么该如何获取范围衰减计算后的伤害呢？
+				 *	为受击委托绑定一个Lambda函数，监听目标即将受击的广播
+				 *	ApplyRadialDamageWithFalloff(...)计算完伤害后，会触发目标的TakeDamage，目标内部广播OnDamageDelegate
+				 *	Lambda被触发，DamageTypeValue获取计算后的值
+				 */
 				CombatInterface->GetOnDamageSignature().AddLambda([&](float DamageAmount)
 				{
 					DamageTypeValue = DamageAmount;
 				});
 			}
+			// 范围伤害处理函数计算距离衰减
 			UGameplayStatics::ApplyRadialDamageWithFalloff(TargetAvatar,
-				DamageTypeValue,
-				0.f,
-				UAuraAbilitySystemLibrary::GetRadialDamageOrigin(EffectContextHandle),
-				UAuraAbilitySystemLibrary::GetRadialDamageInnerRadius(EffectContextHandle),
-				UAuraAbilitySystemLibrary::GetRadialDamageOuterRadius(EffectContextHandle),
-				1.f,
-				UDamageType::StaticClass(),
-				TArray<AActor*>(),
-				SourceAvatar,
-				nullptr
+				DamageTypeValue,				// 中心伤害值
+				0.f,							// 边缘最小伤害
+				UAuraAbilitySystemLibrary::GetRadialDamageOrigin(EffectContextHandle),			// 中心点
+				UAuraAbilitySystemLibrary::GetRadialDamageInnerRadius(EffectContextHandle),		// 全额伤害范围
+				UAuraAbilitySystemLibrary::GetRadialDamageOuterRadius(EffectContextHandle),		// 伤害为0的外圈半径
+				1.f,							// 衰减指数
+				UDamageType::StaticClass(),		// 伤害类型
+				TArray<AActor*>(),				// 忽略的Actor				
+				SourceAvatar,					// 伤害施加者
+				nullptr							// 造成伤害的具体Actor（如子弹）
 				);
 		}
-		
+		// 将处理完抗性和距离衰减后的该属性最终伤害，累加到总伤害中
 		Damage += DamageTypeValue;
 	}
 

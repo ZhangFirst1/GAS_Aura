@@ -66,24 +66,30 @@ TArray<USceneComponent*> APointCollection::GetGroundPoints(const FVector& Ground
 	{
 		if (ArrayCopy.Num() >= NumPoints) return ArrayCopy;
 
+		// 忽略原点
 		if (Pt != Pt_0)
 		{
+			// 根据YawOverride改变点的位置
 			FVector ToPoint = Pt->GetComponentLocation() - Pt_0->GetComponentLocation();
 			ToPoint = ToPoint.RotateAngleAxis(YawOverride, FVector::UpVector);
 			Pt->SetWorldLocation(Pt_0->GetComponentLocation() + ToPoint);
 		}
 
+		// 射线检测位置
 		const FVector RaisedLocation = FVector(Pt->GetComponentLocation().X, Pt->GetComponentLocation().Y, Pt->GetComponentLocation().Z + 500.f);
 		const FVector LoweredLocation = FVector(Pt->GetComponentLocation().X, Pt->GetComponentLocation().Y, Pt->GetComponentLocation().Z - 500.f);
 
+		// 忽略玩家
 		FHitResult HitResult;
 		TArray<AActor*> IgnoreActors;
 		UAuraAbilitySystemLibrary::GetLivePlayersWithinRadius(this, IgnoreActors, TArray<AActor*>(), 1500.f, GetActorLocation());
 
+		// 射线检测
 		FCollisionQueryParams QueryParams;
 		QueryParams.AddIgnoredActors(IgnoreActors);
 		GetWorld()->LineTraceSingleByProfile(HitResult, RaisedLocation, LoweredLocation, FName("BlockAll"), QueryParams);
-
+ 
+		// 设置Z位置
 		const FVector AdjustedLocation = FVector(Pt->GetComponentLocation().X, Pt->GetComponentLocation().Y, HitResult.ImpactPoint.Z);
 		Pt->SetWorldLocation(AdjustedLocation);
 		Pt->SetWorldRotation(UKismetMathLibrary::MakeRotFromZ(HitResult.ImpactNormal));

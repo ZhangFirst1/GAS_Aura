@@ -279,7 +279,7 @@ void UAuraAttributeSet::HandleIncomingXP(const FEffectProperties& Props)
 {
 	const float LocalIncomingXP = GetIncomingXP();
 	SetIncomingXP(0.f);
-
+	
 	if (Props.SourceCharacter->Implements<UPlayerInterface>())
 	{
 		const int32 CurrentLevel = ICombatInterface::Execute_GetPlayLevel(Props.SourceCharacter);

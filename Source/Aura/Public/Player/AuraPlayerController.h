@@ -100,7 +100,8 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UDamageTextComponent> DamageTextComponentClass;	// 显示伤害文本Component
-	
+
+	// 魔法圈
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<AMagicCircle> MagicCircleClass;
 
