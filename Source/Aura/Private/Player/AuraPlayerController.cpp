@@ -16,8 +16,9 @@
 #include "Components/DecalComponent.h"
 #include "Components/SplineComponent.h"
 #include "Input/AuraInputComponent.h"
-#include "Interaction/EnemyInterface.h"
 #include "GameFramework/Character.h"
+#include "Interaction/EnemyInterface.h"
+#include "Interaction/HighLightInterface.h"
 #include "UI/Widget/DamageTextComponent.h"
 
 
@@ -121,12 +122,29 @@ void AAuraPlayerController::UpdateMagicCircleLocation()
 	}
 }
 
-void AAuraPlayerController::CursorTrace()
+void AAuraPlayerController::HighLightActor(AActor* InActor)
+{
+	if (IsValid(InActor) && InActor->Implements<UHighLightInterface>())
+	{
+		IHighLightInterface::Execute_HighlightActor(InActor);
+	}
+}
+
+void AAuraPlayerController::UnHighLightActor(AActor* InActor)
+{
+	if (IsValid(InActor) && InActor->Implements<UHighLightInterface>())
+	{
+		IHighLightInterface::Execute_UnHighlightActor(InActor);
+	}
+}
+
+void AAuraPlayerController:: CursorTrace()
 {
 	if (GetASC() && GetASC()->HasMatchingGameplayTag(FAuraGameplayTags::Get().Player_Block_CursorTrace))
 	{
-		if (LastActor) LastActor->UnHighlightActor();
-		if (ThisActor) ThisActor->UnHighlightActor();
+		UnHighLightActor(LastActor);
+		UnHighLightActor(ThisActor);
+		
 		LastActor = nullptr;
 		ThisActor = nullptr;
 		return;
@@ -137,12 +155,18 @@ void AAuraPlayerController::CursorTrace()
 	if (!CursorHit.bBlockingHit) return;
 
 	LastActor = ThisActor;
-	ThisActor = Cast<IEnemyInterface>(CursorHit.GetActor());
+	if (IsValid(CursorHit.GetActor()) && CursorHit.GetActor()->Implements<UHighLightInterface>())
+	{
+		ThisActor = CursorHit.GetActor();
+	}else
+	{
+		ThisActor = nullptr;
+	}
 
 	if (LastActor != ThisActor)
 	{
-		if (LastActor) LastActor->UnHighlightActor();
-		if (ThisActor) ThisActor->HighlightActor();
+		UnHighLightActor(LastActor);
+		HighLightActor(ThisActor);
 	}
 	
 	/**
@@ -197,9 +221,14 @@ void AAuraPlayerController::AbilityInputTagPressed(const FGameplayTag InputTag)
 	 // 点击鼠标左键
 	if (InputTag.MatchesTagExact(FAuraGameplayTags::Get().InputTag_LMB))
 	{
-		// 根据鼠标目标，赋值是否选中目标
-		bTargeting = ThisActor ? true : false;
-		bAutoRunning = false;		// 在松开鼠标前还不确定是否为短按鼠标
+		if (IsValid(ThisActor))
+		{
+			TargetingStatus = ThisActor->Implements<UEnemyInterface>() ? ETargetingStatus::TargetingEnemy : ETargetingStatus::TargetingNonEnemy;
+			bAutoRunning = false;		// 在松开鼠标前还不确定是否为短按鼠标
+		}else
+		{
+			TargetingStatus = ETargetingStatus::NotTargeting;
+		}
 	}
 	if (GetASC()) GetASC()->AbilityInputTagPressed(InputTag);
 }
@@ -218,7 +247,7 @@ void AAuraPlayerController::AbilityInputTagReleased(const FGameplayTag InputTag)
 	if (GetASC()) GetASC()->AbilityInputTagReleased(InputTag);
 
 	// 没选中Target且没按住shift时，才会检测松开鼠标左键移动
-	if (!bTargeting && !bShiftKeyDown)
+	if (TargetingStatus != ETargetingStatus::TargetingEnemy && !bShiftKeyDown)
 	{
 		const APawn* ControlledPawn = GetPawn();
 		// 松开按键时 是否为短按左键，若是则开始自动寻路
@@ -226,6 +255,16 @@ void AAuraPlayerController::AbilityInputTagReleased(const FGameplayTag InputTag)
 		{
 			if (UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, ControlledPawn->GetActorLocation(), CachedDestination))
 			{
+				// 对于Checkpoint来说，移动到指定位置
+				if (IsValid(ThisActor) && ThisActor->Implements<UHighLightInterface>())
+				{
+					IHighLightInterface::Execute_SetMoveToLocation(ThisActor, CachedDestination);
+				}
+				else if (GetASC() && !GetASC()->HasMatchingGameplayTag(FAuraGameplayTags::Get().Player_Block_InputReleased))
+				{
+					// 点击生成奶瓜特效
+					UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ClickNiagaraSystem, CachedDestination);
+				}
 				// 每次导航前清空所有点
 				Spline->ClearSplinePoints();
 				for (const FVector& PointLoc : NavPath->PathPoints)
@@ -239,16 +278,10 @@ void AAuraPlayerController::AbilityInputTagReleased(const FGameplayTag InputTag)
 					bAutoRunning = true;
 				}
 			}
-			// 点击生成奶瓜特效
-			if (GetASC() && !GetASC()->HasMatchingGameplayTag(FAuraGameplayTags::Get().Player_Block_InputReleased))
-			{
-				UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ClickNiagaraSystem, CachedDestination);
-			}
-
 		}
 		// 重置
 		FollowTime = 0.f;
-		bTargeting = false;
+		TargetingStatus = ETargetingStatus::NotTargeting;
 	}
 	
 }
@@ -264,7 +297,7 @@ void AAuraPlayerController::AbilityInputTagHeld(const FGameplayTag InputTag)
 		return;
 	}
 	// 按鼠标左键，且  有选中目标或按住shift
-	if (bTargeting || bShiftKeyDown)
+	if (TargetingStatus == ETargetingStatus::TargetingEnemy || bShiftKeyDown)
 	{
 		if (GetASC()) GetASC()->AbilityInputTagHeld(InputTag);	
 	}

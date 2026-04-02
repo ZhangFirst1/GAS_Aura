@@ -78,6 +78,8 @@ public:
 
 	UFUNCTION()
 	virtual void OnRep_Burned();
+
+	void SetCharacterClass(ECharacterClass InClass) { CharacterClass = InClass; }
 	
 protected:
 	virtual void BeginPlay() override;
@@ -97,6 +99,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	FName TailSocketName;
 
+	UPROPERTY(BlueprintReadOnly)
 	bool bDead = false;
 
 	// Stun回调函数
@@ -126,7 +129,7 @@ protected:
 
 	
 	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level) const;
-	virtual void InitiallizeDefaultAbilities() const;
+	virtual void InitializeDefaultAbilities() const;
 
 	// 添加能力
 	void AddCharacterAbilities();

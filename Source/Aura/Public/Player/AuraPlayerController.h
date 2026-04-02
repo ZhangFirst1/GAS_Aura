@@ -7,17 +7,24 @@
 #include "GameFramework/PlayerController.h"
 #include "AuraPlayerController.generated.h"
 
+class IHighLightInterface;
 class UNiagaraSystem;
 class USplineComponent;
 struct FGameplayTag;
 class UAuraInputConfig;
 class UInputMappingContext;
 class UInputAction;
-class IEnemyInterface;
 struct FInputActionValue;
 class UAuraAbilitySystemComponent;
 class UDamageTextComponent;
 class AMagicCircle;
+
+enum class ETargetingStatus : uint8
+{
+	TargetingEnemy,
+	TargetingNonEnemy,
+	NotTargeting
+};
 
 /**
  * 
@@ -62,9 +69,11 @@ private:
 
 	// 用于区分鼠标选中的对象
 	void CursorTrace();
-	IEnemyInterface* LastActor;
-	IEnemyInterface* ThisActor;
+	TObjectPtr<AActor> LastActor;
+	TObjectPtr<AActor> ThisActor;
 	FHitResult CursorHit;
+	static void HighLightActor(AActor* InActor);
+	static void UnHighLightActor(AActor* InActor);
 
 	// 按下 松开 按住 的动作
 	void AbilityInputTagPressed(const FGameplayTag InputTag);
@@ -85,7 +94,7 @@ private:
 	float FollowTime = 0.f;								// 移动时间
 	float ShortPressThreshold = 1.f;					// 多久算短按
 	bool bAutoRunning = false;							// 是否自动移动
-	bool bTargeting = false;							// 是否选中目标
+	ETargetingStatus TargetingStatus = ETargetingStatus::NotTargeting;	// 瞄准状态（空、敌人、地图入口）
 
 	UPROPERTY(EditDefaultsOnly)
 	float AutoRunAcceptanceRadius = 50.f;				// 到目的地内的半径

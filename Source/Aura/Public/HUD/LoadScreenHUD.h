@@ -16,12 +16,14 @@ class AURA_API ALoadScreenHUD : public AHUD
 {
 	GENERATED_BODY()
 public:
+	// 初始加载屏幕的 Widget
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UUserWidget> LoadScreenWidgetClass;
 
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<ULoadScreenWidget> LoadScreenWidget;
-	
+
+	// 初始加载屏幕 Widget 的 ViewModel
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UMVVM_LoadScreen> LoadScreenViewModeClass;
 	

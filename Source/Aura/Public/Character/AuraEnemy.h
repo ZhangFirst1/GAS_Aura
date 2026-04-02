@@ -6,6 +6,7 @@
 #include "Character/AuraCharacterBase.h"
 #include "UI/WidgetController/OverlayWidgetController.h"
 #include "Interaction/EnemyInterface.h"
+#include "Interaction/HighLightInterface.h"
 #include "AuraEnemy.generated.h"
 
 class UBehaviorTree;
@@ -15,17 +16,18 @@ class AAuraAIController;
  * 
  */
 UCLASS()
-class AURA_API AAuraEnemy : public AAuraCharacterBase, public IEnemyInterface
+class AURA_API AAuraEnemy : public AAuraCharacterBase, public IEnemyInterface, public IHighLightInterface
 {
 	GENERATED_BODY()
 public:
 	AAuraEnemy();
 	virtual void PossessedBy(AController* NewController) override;
 
-	/** IEnemyInterface */
-	virtual void HighlightActor() override;
-	virtual void UnHighlightActor() override;
-	/** end IEnemyInterface */
+	/** IHighLight Interface */
+	virtual void HighlightActor_Implementation() override;
+	virtual void UnHighlightActor_Implementation() override;
+	virtual void SetMoveToLocation_Implementation(FVector& OutDestination) override;
+	/** end IHighLight */
 
 	/** ICombatInterface */
 	virtual int32 GetPlayLevel_Implementation() const override;
@@ -53,10 +55,12 @@ public:
 	// 蘸豆目标
 	UPROPERTY(BlueprintReadWrite, Category = "Combat")
 	TObjectPtr<AActor> CombatTarget;
+
+	void SetLevel(int32 InLevel) { Level = InLevel; }
 protected:
 	virtual void BeginPlay() override;
 	virtual void InitAbilityActorInfo() override;
-	virtual void InitiallizeDefaultAbilities() const override;
+	virtual void InitializeDefaultAbilities() const override;
 	virtual void StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount) override;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
@@ -72,6 +76,8 @@ protected:
 	UPROPERTY()
 	TObjectPtr<AAuraAIController> AuraAIController;
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void SpawnLoot();
 private:
 	bool bIsDead = false;
 };

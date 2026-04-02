@@ -248,7 +248,7 @@ void AAuraCharacterBase::ApplyEffectToSelf(TSubclassOf<UGameplayEffect> Gameplay
 	GetAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(*EffectContext.Data.Get(), GetAbilitySystemComponent());
 }
 
-void AAuraCharacterBase::InitiallizeDefaultAbilities() const
+void AAuraCharacterBase::InitializeDefaultAbilities() const
 {
 	ApplyEffectToSelf(DefaultPrimaryAttributes, 1.f);
 	ApplyEffectToSelf(DefaultSecondaryAttributes, 1.f);
